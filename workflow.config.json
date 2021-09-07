@@ -1,0 +1,181 @@
+{
+  "workflow_description": {
+    "name": "CLIP-seq",
+    "version": 1.0,
+    "label": "CLIP-seq",
+    "type": "CLIP-seq",
+    "inputs": "raw_fastq/{sample}*fastq.gz",
+    "outputs": [
+      "cleaned_fastq/{sample}*fastq.gz",
+      "mapped/*",
+      "logs/{sample}/*",
+      "qc_reports/*"
+    ],
+    "report_index": "qc_reports/all_samples/alignment_RNA_multiqc/multiqc.html",
+    "reports":[
+       "qc_reports/*"
+    ]
+  },
+  "general_params": [
+    "library_name",
+    "sample_name",
+    "lib_forward_read_length",
+    "lib_reverse_read_length"
+  ],
+  "gui_params": {
+    "primary": {
+      "reference": {
+        "label": "Genomic Reference",
+        "type": "enum",
+        "default": "GRCh38-p10",
+        "list": ##INCLUDE:reference_info/reference.json##
+      },
+      "RNAseq_type" : {
+        "label": "RNAseq type",
+        "type": "enum",
+        "default": "classic_rev",
+        "list": {
+          "classic_unstd": "Classic Unstranded",
+          "classic_fwd": "Classic Forward",
+          "classic_rev": "Classic Reverse",
+          "quant_fwd": "QuantSeq FWD",
+          "quant_rev": "QuantSeq REV",
+          "sense": "Lexogen SENSE",
+          "corall": "Lexogen CORALL"
+        }
+      },
+      "type_of_extraction": {
+        "label": "Type of extraction",
+        "type": "enum",
+        "default": "PolyA",
+        "list": {
+          "PolyA": "PolyA",
+          "rRNA": "rRNA"
+        }
+      }
+    },
+    "detailed": {
+      "trim_adapters": {
+        "label": "Trim adapters",
+        "type": "string",
+        "default": ""
+      },
+      "mark_duplicates": {
+        "label": "Mark duplicates",
+        "type": "bool",
+        "default": true
+      },
+      "trim_quality": {
+        "label": "Trim quality",
+        "type": "bool",
+        "default": false
+      },
+      "umi_usage": {
+        "label": "UMI usage",
+        "type": "enum",
+        "default": "mark_duplicates",
+        "list": {
+          "no": "Don't use UMI",
+          "mark_duplicates": "Mark duplicates"
+        }
+      },
+      "remove_duplicates": {
+        "label": "Remove duplicates",
+        "type": "bool",
+        "default": true
+      },
+      "keep_not_markDups_bam": {
+        "label": "Keep not_markDups_bam file",
+        "type": "bool",
+        "default": false
+      },
+      "max_intron": {
+        "label": "Max intron",
+        "type": "int",
+        "default": 1000000
+      },
+      "strandness": {
+        "label": "Strandness",
+        "type": "string",
+        "default": "unstr",
+        "conditions": {
+          "value": {
+            "RNAseq_type": {
+              "classic_fwd": "fwd",
+              "classic_rev": "rev",
+              "quant_fwd": "fwd",
+              "quant_rev": "fwd",
+              "sense": "rev"
+            }
+          }
+        }
+      },
+      "trim_left1": {
+        "label": "Trim left 1",
+        "type": "int",
+        "default": 0,
+        "conditions": {
+          "value": {
+            "RNAseq_type": {
+              "quant_fwd": 12,
+              "sense": 9
+            },
+            "UMI": {
+              "Quantseq FWD": 6
+            }
+          }
+        }
+      },
+      "trim_left2": {
+        "label": "Trim left 2",
+        "type": "int",
+        "default": 0,
+        "conditions": {
+          "value": {
+            "RNAseq_type": {
+              "quant_rev": 12,
+              "sense": 6
+            }
+          }
+        }
+      },
+      "trim_right1": {
+        "label": "Trim right 1",
+        "type": "int",
+        "default": 0
+      },
+      "trim_right2": {
+        "label": "Trim right 2",
+        "type": "int",
+        "default": 0,
+        "conditions": {
+          "value": {
+            "UMI": {
+              "CORALL": 9
+            }
+          }
+        }
+      },
+      "map_score": {
+        "label": "Map score",
+        "type": "string",
+        "default": "0.66"
+      },
+      "map_perc": {
+        "label": "Map perc",
+        "type": "string",
+        "default": "0.66"
+      },
+        "perc_mismatch": {
+          "label": "Perc mismatch",
+          "type": "string",
+          "default": "0.66"
+      },
+      "min_length": {
+        "label": "Min length",
+        "type": "int",
+        "default": 35
+      }
+    }
+  }
+}
