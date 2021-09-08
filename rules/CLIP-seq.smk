@@ -28,11 +28,8 @@ SAMPLE = define_variable(cfg, "FULL_NAME")
 SAMPLE_REP = define_variable(cfg, "FULL_NAME_REP")
 SMK_HOME = define_variable(cfg, "SMK_HOME")
 
-cfg['keep_dups'] = ['yes']*len(cfg)
-cfg['multimapped'] = ['yes']*len(cfg)
-cfg['callers'] = ['pureClip;macs2']*len(cfg)
-cfg['feat_type'] = ['gene']*len(cfg)
-cfg['annotate_by'] = ['gene_name,gene_id']*len(cfg)
+
+
 
 ##########################################
 # FINAL RULE
@@ -50,18 +47,18 @@ def specify_inputs_for_final_report(wildcards):
             sample_list += [x]
     # print(sample_list)
     inputs = []
-    for caller in cfg.callers.min().split(";"):
-        inputs.append([ADIR+"/RCAS/from_"+caller+"/"+x+"/"+x+".uniq_reads.no_dups.RCAS_report.html" for x in sample_list])
-        inputs.append([ADIR+"/annotated_beds/from_"+caller+"/"+x+"/"+x+".uniq_reads.no_dups.annotated.bed" for x in sample_list])
-        if 'keep_dups' in cfg and cfg.keep_dups.tolist()[0] == "yes":
-            inputs.append([ADIR+"/RCAS/from_"+caller+"/"+x+"/"+x+".uniq_reads.keep_dups.RCAS_report.html" for x in sample_list])
-            inputs.append([ADIR+"/annotated_beds/from_"+caller+"/"+x+"/"+x+".uniq_reads.keep_dups.annotated.bed" for x in sample_list])
-        if 'multimapped' in cfg and cfg['multimapped'].tolist()[0] == "yes":
-            inputs.append([ADIR+"/RCAS/from_"+caller+"/"+x+"/"+x+".all_reads.no_dups.RCAS_report.html" for x in sample_list])
-            inputs.append([ADIR+"/annotated_beds/from_"+caller+"/"+x+"/"+x+".all_reads.no_dups.annotated.bed" for x in sample_list])
-            if 'keep_dups' in cfg and cfg.keep_dups.tolist()[0] == "yes":
-                inputs.append([ADIR+"/RCAS/from_"+caller+"/"+x+"/"+x+".all_reads.keep_dups.RCAS_report.html" for x in sample_list])
-                inputs.append([ADIR+"/annotated_beds/from_"+caller+"/"+x+"/"+x+".all_reads.keep_dups.annotated.bed" for x in sample_list])
+    for caller in config["callers"].split(";"):
+        inputs.append(["RCAS/from_"+caller+"/"+x+"/"+x+".uniq_reads.no_dups.RCAS_report.html" for x in sample_list])
+        inputs.append(["annotated_beds/from_"+caller+"/"+x+"/"+x+".uniq_reads.no_dups.annotated.bed" for x in sample_list])
+        if config['keep_dups']:
+            inputs.append(["RCAS/from_"+caller+"/"+x+"/"+x+".uniq_reads.keep_dups.RCAS_report.html" for x in sample_list])
+            inputs.append(["annotated_beds/from_"+caller+"/"+x+"/"+x+".uniq_reads.keep_dups.annotated.bed" for x in sample_list])
+        if config['multimapped']:
+            inputs.append(["RCAS/from_"+caller+"/"+x+"/"+x+".all_reads.no_dups.RCAS_report.html" for x in sample_list])
+            inputs.append(["annotated_beds/from_"+caller+"/"+x+"/"+x+".all_reads.no_dups.annotated.bed" for x in sample_list])
+            if config['keep_dups']:
+                inputs.append(["RCAS/from_"+caller+"/"+x+"/"+x+".all_reads.keep_dups.RCAS_report.html" for x in sample_list])
+                inputs.append(["annotated_beds/from_"+caller+"/"+x+"/"+x+".all_reads.keep_dups.annotated.bed" for x in sample_list])
     print(inputs)
     return inputs
     
@@ -84,14 +81,14 @@ def annotate_peaks_input(wildcards):
         inputs['bed'] = "CLAM/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand(REF_DIR+"/{organism}/{ref}/annot/{ref}.gtf", organism=cfg.organism.tolist()[0], ref=cfg.reference.tolist()[0])[0]
+    inputs['gtf'] = expand("{ref-dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0]
     return inputs
 
 rule annotate_peaks:
     input:  unpack(annotate_peaks_input),
     output: bed = "annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
     log:    run = "annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotate_peaks.log",
-    resources: mem=10 if cfg.organism.min() in ["homsap"] else 5
+    resources: mem=10 if config["organism"] == "homsap" else 5
     params: rscript = workflow.basedir+"/../scripts/annotate_bed_file.R",
             feat_type=config["feat_type"],
             annotate_by = config["annotate_by"],
@@ -107,8 +104,8 @@ def post_process_by_RCAS_input(wildcards):
         inputs['bed'] = "CLAM/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand(REF_DIR+"/{organism}/{ref}/annot/{ref}.gtf", organism=cfg['organism'].tolist()[0], ref=cfg['reference'].tolist()[0])[0]
-    inputs['msigdb'] = expand(REF_DIR+"/{organism}/{ref}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", organism="homsap", ref="GRCh38-p10")[0]
+    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0]
+    inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory,ref=config["reference"])[0]
     return inputs
 
 rule post_process_by_RCAS:
@@ -116,7 +113,7 @@ rule post_process_by_RCAS:
     output: html    = "RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.RCAS_report.html",
             tmp_bed = "RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed",
     log:    run     = "RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.log",
-    params: organism = cfg.organism.tolist()[0],
+    params: organism = config["organism"],
             dir = "RCAS/from_{caller}/{sample}/",
             html= "RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed.RCAS.report.html",
             rscript= workflow.basedir+"/../wraps/CLIP-seq_analysis/post_process_by_RCAS/RCAS_script.R",
@@ -139,18 +136,14 @@ rule CLAM_postprocess:
 rule call_CLAM:
     input:  uniq_bam = "CLAM/{name}.{multi}.{dups}/unique.sorted.bam",
             mult_bam ="CLAM/{name}.{multi}.{dups}/realigned.sorted.bam",
-            gtf = expand(REF_DIR+"/{organism}/{ref}/annot/{ref}.gtf", organism=cfg['organism'].tolist()[0], ref=cfg['reference'].tolist()[0]),
+            gtf = expand("{ref_dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0],
     output: bed = "CLAM/{name}.{multi}.{dups}/narrow_peak.permutation.bed",
     log:    run = "CLAM/{name}.{multi}.{dups}.call_CLAM.log",
     threads: 20
-    params: dups = cfg.keep_dups.tolist()[0], # TODO: should be analysis parameter for keeping duplicates ['yes', 'no']
-            multi = cfg.multimapped.tolist()[0], # TODO: should be analysis parameter for keeping multimapped reads ['yes', 'no']
-            strand = "none", # TODO: should be analysis parameter for strandness ['same', 'opposite', 'none']
-            max_multi_hits = 100, # TODO: should be analysis parameter for maximum hits allowed for multi-mapped reads [integer]
-            read_tagger = "median", # TODO: should be analysis parameter for read tagger method, 'median' for read center, 'start' for read start site ['median', 'start']
-            qval_cutoff = 0.05, # TODO: should be analysis parameter for adjusted p-values cutoff [float: 0-1]
-            merge_size = 50, # TODO: should be analysis parameter for Select best peak within this size [integer]
-            extend_peak = 50, # TODO: should be analysis parameter for Extend peak to this size if less than it [integer]
+    params: strand =  config["strandness"], # strandness
+            qval_cutoff = config["qval_cutoff"], # adjusted p-values cutoff [float: 0-1]
+            merge_size = config["merge_size"], # Select best peak within this size [integer]
+            extend_peak = config["extend_peak"], # Extend peak to this size if less than it [integer]
             dir = "CLAM/{name}.{multi}.{dups}/",
     conda:  "../wrappers/call_CLAM/env.yaml",
     script: "../wrappers/call_CLAM/script.py"
@@ -163,14 +156,9 @@ rule call_CLAM_preprocess:
     log:    run = "CLAM/{name}.{multi}.{dups}.call_CLAM_preprocess.log",
     threads: 1
     resources: mem=50
-    params: dups = config["keep_dups"], # TODO: should be analysis parameter for keeping duplicates ['yes', 'no']
-            multi = config["multimapped"], # TODO: should be analysis parameter for keeping multimapped reads ['yes', 'no']
-            strand = "none", # TODO: should be analysis parameter for strandness ['same', 'opposite', 'none']
-            max_multi_hits = 100, # TODO: should be analysis parameter for maximum hits allowed for multi-mapped reads [integer]
-            read_tagger = "median", # TODO: should be analysis parameter for read tagger method, 'median' for read center, 'start' for read start site ['median', 'start']
-            qval_cutoff = 0.05, # TODO: should be analysis parameter for adjusted p-values cutoff [float: 0-1]
-            merge_size = 50, # TODO: should be analysis parameter for Select best peak within this size [integer]
-            extend_peak = 50, # TODO: should be analysis parameter for Extend peak to this size if less than it [integer]
+    params: strand =  config["strandness"], # strandness
+            max_multi_hits = config["max_multi_hits"], # maximum hits allowed for multi-mapped reads [integer]
+            read_tagger = config["read_tagger"], # read tagger method, 'median' for read center, 'start' for read start site ['median', 'start']
             dir = "CLAM/{name}.{multi}.{dups}/",
     conda:  "../wrappers/call_CLAM/env.yaml", # it would be the exact same env as in rule call_CLAM but as it was tough to create one we will use the same
     script: "../wrappers/call_CLAM_preprocess/script.py"
@@ -179,7 +167,7 @@ rule call_CLAM_preprocess:
 rule call_macs2:
     input:  bam = "bams/{name}.{multi}.{dups}.bam",
             bai = "bams/{name}.{multi}.{dups}.bam.bai",
-            chrs= expand(REF_DIR+"/{organism}/{ref}/seq/{ref}.chrom.sizes", organism=cfg['organism'].tolist()[0], ref=cfg['reference'].tolist()[0]),
+            chrs= expand("{ref_dir}/seq/{ref}.chrom.sizes", ref_dir=reference_directory,ref=config["reference"])[0],
     output: trt_bdg = "macs2/{name}/{name}.{multi}.{dups}.bdg",
             trt_bwg = "macs2/{name}/{name}.{multi}.{dups}.bigWig",
             # ctl_bdg = ADIR+"/macs2/{name}/{name}.{multi}.{dups}.control.bdg",
@@ -196,12 +184,9 @@ rule call_macs2:
             xls_tab = "macs2/{name}/{name}.{multi}.{dups}_peaks.xls",
             sum_tab = "macs2/{name}/{name}.{multi}.{dups}_summits.bed",
             nar_tab = "macs2/{name}/{name}.{multi}.{dups}_peaks.narrowPeak",
-            # effective_GS = cfg.loc[cfg.full_name == "{name}", "eff_genome_size"].min(),
-            # frag_len = cfg.loc[cfg.full_name == "{name}", "frag_len"].min(),
-            # qval_cutof = cfg.loc[cfg.full_name == "{name}", "macs_padj_filter"].min(),
-            effective_GS = 2805636331, #TODO: should be project pramater for effective genome size stored in DB or references
-            frag_len = "unk", #TODO: should be project parameter for sequencing fragment length
-            qval_cutof = 0.05, #TODO: should be project parameter for q-value cutof
+            effective_GS = config["effective_GS"], #effective genome size stored in DB or references
+            # frag_len = "unk", #sequencing fragment length
+            qval_cutof = config["qval_cutof"], #q-value cutof
             dir = "macs2/{name}/",
             name= "{name}.{multi}.{dups}",
             temp= "/mnt/ssd/ssd_1/tmp/",
@@ -212,13 +197,11 @@ rule call_macs2:
 rule call_pureClip:
     input:  bam = "bams/{name}.{multi}.{dups}.bam",
             bai = "bams/{name}.{multi}.{dups}.bam.bai",
-            gen = expand(REF_DIR+"/{organism}/{ref}/seq/{ref}.fasta.gz", organism=cfg['organism'].tolist()[0], ref=cfg['reference'].tolist()[0]),
+            gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory,ref=config["reference"])[0],
     output: bed = "pureClip/{name}/{name}.{multi}.{dups}.crosslink_sites.bed",
             bed2= "pureClip/{name}/{name}.{multi}.{dups}.binding_regions.bed",
     log:    run = "pureClip/{name}/{name}.{multi}.{dups}.call_pureClip.log",
     threads: 10
-    params: dups = config["keep_dups"], # TODO: should be analysis parameter for keeping duplicates ['yes', 'no']
-            multi = config["multimapped"], # TODO: should be analysis parameter for keeping multimapped reads ['yes', 'no']
     conda:  "../wrappers/call_pureClip/env.yaml"
     script: "../wrappers/call_pureClip/script.py"
 
@@ -267,11 +250,11 @@ rule call_pureClip:
 def process_bams_input(wildcards):
     if not "_merged" in wildcards.full_name:
         return {
-            'bam': INPUTS_DIR+"/mapped/"+wildcards.full_name+".bam",
+            'bam': "mapped/"+wildcards.full_name+".bam",
         }
     else:
         return {
-            'bam': [INPUTS_DIR+"/mapped/"+x+".bam" for x in cfg.loc[cfg.condition == re.sub('_merged$', '', wildcards.full_name), "full_name"].tolist()],
+            'bam': ["mapped/"+x+".bam" for x in cfg.loc[cfg.condition == re.sub('_merged$', '', wildcards.full_name), "full_name"].tolist()],
         }
         
 rule process_bams:
@@ -280,9 +263,7 @@ rule process_bams:
             bai = "bams/{full_name}.{multi}.{dups}.bam.bai",
     log:    "bams/{full_name}.{multi}.{dups}.process_bams.log"
     threads: 5,
-    params: quality_cutof = 255, # TODO: should be analysis parameter
-            dups = config["keep_dups"], # TODO: should be analysis parameter for keeping duplicates ['yes', 'no']
-            multi = config["multimapped"], # TODO: should be analysis parameter for keeping multimapped reads ['yes', 'no']
+    params: quality_cutof = config["quality_cutof"],
             tmp_bam = "bams/{full_name}.{multi}.{dups}.tmp.bam",
     conda:  "../wrappers/process_bams/env.yaml"
     script: "../wrappers/process_bams/script.py"
