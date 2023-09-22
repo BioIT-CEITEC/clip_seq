@@ -4,7 +4,7 @@
 import subprocess
 from snakemake.shell import shell
 shell.executable("/bin/bash")
-log_filename = str(snakemake.log)
+log_filename = str(snakemake.log.run)
 
 f = open(log_filename, 'a+')
 f.write("\n##\n## RULE: call_macs2 \n##\n")
@@ -12,15 +12,14 @@ f.close()
 
 version = str(subprocess.Popen("conda list ", shell=True, stdout=subprocess.PIPE).communicate()[0], 'utf-8')
 f = open(log_filename, 'at')
-f.write("## CONDA: "+version+"\n")
+f.write("## CONDA:\n"+version+"\n")
 f.close()
 
 
-if snakemake.wildcards.dups == "no_dups":
-   keep_dups = "1"
-else:
-   keep_dups = "all"
-   
+keep_dups = "all"
+# if snakemake.wildcards.dups == "no_dups":
+#    keep_dups = "1"
+
 nomodel = "--nolambda --nomodel"
 # if str(snakemake.params.frag_len) == "unk":
 #   nomodel = ""
@@ -34,7 +33,11 @@ f.close()
 shell(command)
 
 # macs2 callpeak -t $i -c ${CTL} -g ${GSIZE} -s ${RL} --outdir ${i%.bam} --name ${i%.bam} --nomodel --extsize ${FL} --bdg --tempdir ./tmp -q 0.05 2>&1 | tee ${i%.bam}.macs2.log
-command = "macs2 callpeak -t "+snakemake.input.bam+" --keep-dup "+keep_dups+" -g "+str(snakemake.params.effective_GS)+" --outdir "+snakemake.params.dir+" --name "+snakemake.params.name+" "+nomodel+" --bdg --tempdir "+snakemake.params.temp+" -q "+str(snakemake.params.qval_cutof)+" >> "+log_filename+" 2>&1"
+command = "$(which time) macs2 callpeak -t "+snakemake.input.bam+\
+          " --keep-dup "+keep_dups+" -g "+str(snakemake.params.effective_GS)+\
+          " --outdir "+snakemake.params.dir+" --name "+snakemake.params.name+\
+          " "+nomodel+" --bdg --tempdir "+snakemake.params.temp+\
+          " -q "+str(snakemake.params.qval_cutof)+" >> "+log_filename+" 2>&1"
 f = open(log_filename, 'at')
 f.write("## COMMAND: "+command+"\n")
 f.close()
@@ -64,7 +67,7 @@ f.write("## COMMAND: "+command+"\n")
 f.close()
 shell(command)
 
-command = "bedGraphToBigWig "+snakemake.output.trt_bdg+" "+snakemake.input.chrs+" "+snakemake.output.trt_bwg+" >> "+log_filename+" 2>&1"
+command = "$(which time) bedGraphToBigWig "+snakemake.output.trt_bdg+" "+snakemake.input.chrs+" "+snakemake.output.trt_bwg+" >> "+log_filename+" 2>&1"
 f = open(log_filename, 'at')
 f.write("## COMMAND: "+command+"\n")
 f.close()

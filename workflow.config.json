@@ -1,26 +1,26 @@
 {
   "workflow_description": {
-    "name": "CLIP-seq",
+    "name": "clipseq_analysis",
     "version": 1.0,
     "label": "CLIP-seq",
-    "type": "CLIP-seq",
-    "inputs": "raw_fastq/{sample}*fastq.gz",
-    "outputs": [
-      "cleaned_fastq/{sample}*fastq.gz",
-      "mapped/*",
-      "logs/{sample}/*",
-      "qc_reports/*"
+    "type": "clipseq_analysis",
+    "inputs": [
+      "mapped/*.bam*"
     ],
-    "report_index": "qc_reports/all_samples/alignment_RNA_multiqc/multiqc.html",
+    "outputs": [
+      "mapped/*",
+      "logs/*",
+      "results/*"
+    ],
+    "report_index": "CLIPseq_analysis_report.html",
     "reports":[
-       "qc_reports/*"
+       "CLIPseq_analysis_report.html"
     ]
   },
   "general_params": [
+    "entity_name",
     "library_name",
-    "sample_name",
-    "lib_forward_read_length",
-    "lib_reverse_read_length"
+    "sample_name"
   ],
   "gui_params": {
     "primary": {
@@ -29,41 +29,35 @@
         "type": "enum",
         "default": "gene_name",
         "list": {
-          "gene_name": "gene_name",
-          "gene_id": "gene_id"
-        },
-        "callers": {
-          "label": "Callers",
-          "type": "enum",
-          "default": "pureClip",
-          "list": {
-            "pureClip": "pureClip",
-            "macs2": "macs2"
-          }
+          "gene_name": "gene names",
+          "gene_id": "gene IDs"
+        }
+      },
+      "callers": {
+        "label": "Peak callers",
+        "type": "enum",
+        "default": "pureClip;macs2;CLAM",
+        "list": {
+          "pureClip": "PureCLIP",
+          "macs2": "MACS2",
+          "CLAM": "CLAM",
+          "pureClip;macs2;CLAM": "all of them"
         }
       }
     },
     "detailed": {
       "keep_dups": {
         "label": "Keep duplicates",
-        "type": "string",
-        "default": "yes",
-        "list": {
-          "yes": "yes",
-          "no": "no"
-        }
+        "type": "bool",
+        "default": true
       },
       "multimapped": {
         "label": "Keep multimapped reads",
-        "type": "string",
-        "default": "yes",
-        "list": {
-          "yes": "yes",
-          "no": "no"
-        }
+        "type": "bool",
+        "default": true
       },
       "quality_cutof": {
-        "label": "Quality cutof",
+        "label": "Mapping quality cutof",
         "type": "int",
         "default": 255
       },
@@ -101,13 +95,13 @@
           "start": "'start' for read start site"
         }
       },
-        "merge_size": {
-          "label": "Select best peak within this size",
-          "type": "int",
-          "default": 50
+      "merge_size": {
+        "label": "Select best peak within this size",
+        "type": "int",
+        "default": 50
       },
       "extend_peak": {
-        "label": "Extend peak to this size if less than it",
+        "label": "Extend peak to this size if shorter",
         "type": "int",
         "default": 50
       },
