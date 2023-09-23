@@ -7,7 +7,6 @@ import pandas as pd
 from snakemake.utils import R
 from snakemake.utils import report
 from os.path import split
-from helper import define_variable
 
 
 ##########################################
@@ -50,7 +49,7 @@ def annotate_peaks_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand("{ref-dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
+    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
     return inputs
 
 rule annotate_peaks:
@@ -105,7 +104,7 @@ rule call_CLAM:
     log:    run = "results/CLAM/{name}/{name}.{multi}.{dups}.call_CLAM.log",
     threads: 20
     params: strand =  config["strandness"], # strandness
-            qval_cutoff = config["qval_cutoff"], # adjusted p-values cutoff [float: 0-1]
+            qval_cutoff = config["qval_cutof"], # adjusted p-values cutoff [float: 0-1]
             merge_size = config["merge_size"], # Select best peak within this size [integer]
             extend_peak = config["extend_peak"], # Extend peak to this size if less than it [integer]
             dir = "results/CLAM/{name}/{name}.{multi}.{dups}/",
@@ -223,7 +222,7 @@ rule call_pureClip:
 #         }
         
 rule process_bams:
-    input:  bam = expand("mapped/{sample}.bam", sample=sample_tab.loc[sample_tab.name == samples[0], "sample_name"].unique()),
+    input:  bam = "mapped/{sample}.bam",
     output: bam = "mapped/{sample}.{multi}.{dups}.bam",
             bai = "mapped/{sample}.{multi}.{dups}.bam.bai",
     log:    run = "logs/{sample}/{sample}.{multi}.{dups}.process_bams.log"
