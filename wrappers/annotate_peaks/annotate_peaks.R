@@ -11,6 +11,7 @@ identifier<- str_split(args[5], ",")[[1]]  # must be comma separated list of val
 
 comp_tab <- fread(bed_file, sep = "\t", select=1:3)
 names(comp_tab) <- c("chr","start","end")
+class(comp_tab[["chr"]]) <- "character"
 
 ref <- as.data.table(rtracklayer::import(gtf_file))[type == feat_type, c("seqnames","start","end",identifier), with=F]
 

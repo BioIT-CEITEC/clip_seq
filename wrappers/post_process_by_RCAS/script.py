@@ -17,10 +17,12 @@ f.close()
 
 if snakemake.params.organism == "homo_sapiens":
     try:
-        command = "$(which time) Rscript "+snakemake.params.rscript+
-                  " "+snakemake.input.bed+" "+snakemake.input.gtf+\
-                  " "+snakemake.params.dir+" "+snakemake.output.tmp_bed+\
-                  " "+snakemake.input.msigdb+" >> "+log_filename+" 2>&1"
+        command = "Rscript "+snakemake.params.rscript+\
+                  " "+snakemake.input.bed+\
+                  " "+snakemake.input.gtf+\
+                  " "+snakemake.params.dir+\
+                  " "+snakemake.output.tmp_bed+\
+                  " >> "+log_filename+" 2>&1"
         f = open(log_filename, 'at')
         f.write("## COMMAND: "+command+"\n")
         f.close()

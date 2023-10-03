@@ -27,7 +27,7 @@ def specify_inputs_for_final_report(wildcards):
         if config['keep_dups']:
             inputs.append(expand("results/RCAS/from_{caller}/{name}/{name}.all_reads.keep_dups.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
             inputs.append(expand("results/annotated_beds/from_{caller}/{name}/{name}.all_reads.keep_dups.annotated.bed", caller=callers, name=sample_tab.sample_name))
-    print(inputs)
+    #print(inputs)
     return inputs
     
 rule final_report:
@@ -55,9 +55,9 @@ def annotate_peaks_input(wildcards):
 rule annotate_peaks:
     input:  unpack(annotate_peaks_input),
     output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
-    log:    run = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotate_peaks.log",
+    log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
     resources: mem=10 if config["organism"] == "homo_sapiens" else 5
-    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_bed_file.R",
+    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
             feat_type=config["feat_type"],
             annotate_by = config["annotate_by"],
     conda:  "../wrappers/annotate_peaks/env.yaml"
@@ -80,7 +80,7 @@ rule post_process_by_RCAS:
     input:  unpack(post_process_by_RCAS_input),
     output: html    = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.RCAS_report.html",
             tmp_bed = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed",
-    log:    run     = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.log",
+    log:    run     = "logs/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.from_{caller}.log",
     params: organism = config["organism"],
             dir = "results/RCAS/from_{caller}/{sample}/",
             html= "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed.RCAS.report.html",
@@ -92,7 +92,7 @@ rule post_process_by_RCAS:
 rule call_CLAM_postprocess:
     input:  bed = "results/CLAM/{name}/{name}.{multi}.{dups}/narrow_peak.permutation.bed",
     output: bed = "results/CLAM/{name}/{name}.{multi}.{dups}/narrow_peak.permutation.processed.bed",
-    log:    run = "results/CLAM/{name}/{name}.{multi}.{dups}.CLAM_postprocess.log",
+    log:    run = "logs/{name}/{name}.{multi}.{dups}.CLAM_postprocess.log",
     shell: "awk -F '\\t' 'BEGIN {{OFS = FS}}{{split($4,n,\",\"); split(n[1],v,\":\"); split($5,s,\",\"); $4=v[1]\":\"v[2]\":\"s[1]; $5=v[3]; split($6,t,\",\"); $6=t[1]; print $0}}' {input.bed} > {output.bed} 2>> {log.run}" 
     
     
@@ -101,7 +101,7 @@ rule call_CLAM:
             mult_bam ="results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
             gtf = expand("{ref_dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0],
     output: bed = "results/CLAM/{name}/{name}.{multi}.{dups}/narrow_peak.permutation.bed",
-    log:    run = "results/CLAM/{name}/{name}.{multi}.{dups}.call_CLAM.log",
+    log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM.log",
     threads: 20
     params: strand =  config["strandness"], # strandness
             qval_cutoff = config["qval_cutof"], # adjusted p-values cutoff [float: 0-1]
@@ -115,9 +115,10 @@ rule call_CLAM:
 rule call_CLAM_preprocess:
     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
+            tool_ok = "results/CLAM/CLAM_installed",
     output: uniq_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/unique.sorted.bam",
             mult_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
-    log:    run = "results/CLAM/{name}/{name}.{multi}.{dups}.call_CLAM_preprocess.log",
+    log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM_preprocess.log",
     threads: 1
     resources: mem=50
     params: strand =  config["strandness"], # strandness
@@ -126,6 +127,12 @@ rule call_CLAM_preprocess:
             dir = "results/CLAM/{name}/{name}.{multi}.{dups}/",
     conda:  "../wrappers/call_CLAM/env.yaml", # it would be the exact same env as in rule call_CLAM but as it was tough to create one we will use the same
     script: "../wrappers/call_CLAM_preprocess/script.py"
+    
+rule install_CLAM:
+    output: "results/CLAM/CLAM_installed",
+    log:    "logs/install_CLAM.log",
+    conda:  "../wrappers/call_CLAM/env.yaml",
+    script: "../wrappers/install_CLAM/script.py"
     
 
 rule call_macs2:
@@ -151,7 +158,7 @@ rule call_macs2:
             effective_GS = config["effective_GS"], #effective genome size stored in DB or references
             # frag_len = "unk", #sequencing fragment length
             qval_cutof = config["qval_cutof"], #q-value cutof
-            dir = "macs2/{name}/",
+            dir = "results/macs2/{name}/",
             name= "{name}.{multi}.{dups}",
             temp= GLOBAL_TMPD_PATH,
     conda:  "../wrappers/call_macs2/env.yaml"

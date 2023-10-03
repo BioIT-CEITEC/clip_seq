@@ -15,14 +15,14 @@ f = open(log_filename, 'at')
 f.write("## CONDA:\n"+version+"\n")
 f.close()
 
-############################
-# Be aware that CLAM is manually installed in active conda environment satisfying necessary dependences
-############################
-command = "pip install --index-url https://test.pypi.org/simple/ --no-deps CLAM >> "+log_filename+" 2>&1"
-f = open(log_filename, 'at')
-f.write("## COMMAND: "+command+"\n")
-f.close()
-shell(command)
+# ############################
+# # Be aware that CLAM is manually installed in active conda environment satisfying necessary dependences
+# ############################
+# command = "pip install --index-url https://test.pypi.org/simple/ --no-deps CLAM >> "+log_filename+" 2>&1"
+# f = open(log_filename, 'at')
+# f.write("## COMMAND: "+command+"\n")
+# f.close()
+# shell(command)
 
 version = str(subprocess.Popen("$(which CLAM) --version 2>&1 ", shell=True, stdout=subprocess.PIPE).communicate()[0], 'utf-8')
 f = open(log_filename, 'at')

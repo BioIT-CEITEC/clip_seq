@@ -7,12 +7,17 @@ library(RCAS)
 if (!require('BSgenome.Hsapiens.UCSC.hg38')) BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')
 
 args = commandArgs(trailingOnly=TRUE)
+# 
+# bed = "results/CLAM/ZNF-FCLx/ZNF-FCLx.all_reads.keep_dups/narrow_peak.permutation.processed.bed"
+# gtf = "/mnt/nfs/shared/CFBioinformatics/references_backup/homo_sapiens/GRCh38-p10/annot/GRCh38-p10.gtf"
+# dir = "results/RCAS/from_CLAM/ZNF-FCLx/"
+# tmp_bed = "results/RCAS/from_CLAM/ZNF-FCLx/ZNF-FCLx.all_reads.keep_dups.input.bed"
+# msigdb = "/mnt/nfs/shared/CFBioinformatics/references_backup/homo_sapiens/GRCh38-p10/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt"
 
 bed <- args[1]
 gtf <- args[2]
 dir <- args[3]
 tmp_bed <- args[4]
-msigdb <- args[5]
 
 bed_tab <- fread(bed, sep = "\t", select=1:6)
 fwrite(bed_tab, tmp_bed, sep = "\t", quote = F, row.names = F, col.names = F)
@@ -21,7 +26,7 @@ setwd(dir)
 
 runReport( queryFilePath = basename(tmp_bed),
            gffFilePath = gtf,
-           #msigdbFilePath = msigdb,
+           printProcessedTables = T,
            genomeVersion = "hg38",
            motifAnalysis = T)
 
