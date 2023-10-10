@@ -73,7 +73,7 @@ def post_process_by_RCAS_input(wildcards):
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
     inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
-    inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory, ref=config["reference"])[0]
+    #inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory, ref=config["reference"])[0]
     return inputs
 
 rule post_process_by_RCAS:

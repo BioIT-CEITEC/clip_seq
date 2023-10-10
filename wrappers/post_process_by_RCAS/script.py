@@ -16,6 +16,7 @@ f.write("## CONDA:\n"+version+"\n")
 f.close()
 
 if snakemake.params.organism == "homo_sapiens":
+  if os.path.isfile(snakemake.input.bed) and os.path.getsize(snakemake.input.bed) > 0:
     try:
         command = "Rscript "+snakemake.params.rscript+\
                   " "+snakemake.input.bed+\
@@ -40,6 +41,15 @@ if snakemake.params.organism == "homo_sapiens":
         f.write("## COMMAND: "+command+"\n")
         f.close()
         shell(command)
+  else:
+    with open(log_filename, 'at') as f:
+        f.write("## NOTE: "+snakemake.input.bed+" is empty\n")
+  
+    command = "touch "+snakemake.params.html+" >> "+log_filename+" 2>&1"
+    f = open(log_filename, 'at')
+    f.write("## COMMAND: "+command+"\n")
+    f.close()
+    shell(command)
 else:
     # other species must be added in RCAS_script.R
     raise ValueError("Only Human is currently supported, other species must be added!")

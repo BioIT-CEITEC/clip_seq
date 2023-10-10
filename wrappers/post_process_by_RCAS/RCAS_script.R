@@ -1,7 +1,7 @@
 # source('http://bioconductor.org/biocLite.R')
 # biocLite('RCAS')
 library(RCAS)
-#library(data.table)
+library(data.table)
 
 # For other species (supported are mouse, fly and worm) a genome file must be downloaded as a library (see line below) and genomeVersion parameter must be changed in runReport
 if (!require('BSgenome.Hsapiens.UCSC.hg38')) BiocManager::install('BSgenome.Hsapiens.UCSC.hg38')
@@ -20,6 +20,8 @@ dir <- args[3]
 tmp_bed <- args[4]
 
 bed_tab <- fread(bed, sep = "\t", select=1:6)
+names(bed_tab) <- c("chr","start","end","name","score","strand")
+class(bed_tab[["chr"]]) <- "character"
 fwrite(bed_tab, tmp_bed, sep = "\t", quote = F, row.names = F, col.names = F)
 
 setwd(dir)
