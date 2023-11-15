@@ -1,6 +1,7 @@
 #########################################
 # wrapper for rule: post_process_by_RCAS
 #########################################
+import os
 import subprocess
 from snakemake.shell import shell
 shell.executable("/bin/bash")
@@ -32,10 +33,10 @@ if snakemake.params.organism == "homo_sapiens":
         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
         message = template.format(type(ex).__name__, ex.args)
         print(message)
-        
+
         with open(log_filename, 'at') as f:
             f.write("## ERROR: "+message+"\n")
-        
+
         command = "touch "+snakemake.params.html+" >> "+log_filename+" 2>&1"
         f = open(log_filename, 'at')
         f.write("## COMMAND: "+command+"\n")
@@ -44,8 +45,8 @@ if snakemake.params.organism == "homo_sapiens":
   else:
     with open(log_filename, 'at') as f:
         f.write("## NOTE: "+snakemake.input.bed+" is empty\n")
-  
-    command = "touch "+snakemake.params.html+" >> "+log_filename+" 2>&1"
+
+    command = "touch "+snakemake.params.html+" "+snakemake.output.tmp_bed+" >> "+log_filename+" 2>&1"
     f = open(log_filename, 'at')
     f.write("## COMMAND: "+command+"\n")
     f.close()
