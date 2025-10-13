@@ -38,7 +38,7 @@ if os.path.isfile(snakemake.input.bed) and sum(1 for line in open(snakemake.inpu
     if snakemake.wildcards.caller == "macs2":
       orig = pandas.read_csv(snakemake.input.bed, sep="\t", header=None, names=["chr","start","end","peak_id","score","strand","signal","pvalue","qvalue","summit"])
     else:
-      orig = pandas.read_csv(snakemake.input.bed, sep="\t", header=None, names=["chr","start","end","peak_id","strand","score"])
+      orig = pandas.read_csv(snakemake.input.bed, sep="\t", header=None, names=["chr","start","end","peak_id","score","strand"])
     new = pandas.read_csv(snakemake.output.tsv, sep="\t", header=0)
     new.rename(columns={new.columns[0]:"peak_id"}, inplace=True)
     new.rename(columns=lambda s:s.replace(" ","_"), inplace=True)
