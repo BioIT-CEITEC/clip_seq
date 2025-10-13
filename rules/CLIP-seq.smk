@@ -49,20 +49,34 @@ def annotate_peaks_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = config["organism_gtf"],
+    inputs['gtf'] = config["organism_gtf"]
+    inputs['fa'] = config["organism_fasta"]
     return inputs
 
 rule annotate_peaks:
-    input:  unpack(annotate_peaks_input),
-    output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+    input:  unpack(annotate_peaks_input)
+    output: tsv = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+            annstats = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.HOMER_ann_stats.tsv",
     log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
-    resources: mem=10 if config["organism"] == "homo_sapiens" else 5
-    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
-            feat_type=config["feat_type"],
-            annotate_by = config["annotate_by"],
+    resources: mem = 10 if config["organism"] == "homo_sapiens" else 5
+    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/plots_and_stats.R",
+            fdr_cutof = config["macs_padj_filter"],
+            best = config["top_peaks"],
+            tmpd = GLOBAL_TMPD_PATH,
     conda:  "../wrappers/annotate_peaks/env.yaml"
     script: "../wrappers/annotate_peaks/script.py"
-    
+
+#rule annotate_peaks:
+#    input:  unpack(annotate_peaks_input),
+#    output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+#    log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
+#    resources: mem=10 if config["organism"] == "homo_sapiens" else 5
+#    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
+#            feat_type=config["feat_type"],
+#            annotate_by = config["annotate_by"],
+#    conda:  "../wrappers/annotate_peaks/env.yaml"
+#    script: "../wrappers/annotate_peaks/script.py"
+#    
 
 def post_process_by_RCAS_input(wildcards):
     inputs = dict()
@@ -72,7 +86,7 @@ def post_process_by_RCAS_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = config["organism_gtf"],
+    inputs['gtf'] = config["organism_gtf"]
     #inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory, ref=config["reference"])[0]
     return inputs
 

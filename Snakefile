@@ -27,6 +27,9 @@ config = BR.load_organism()
 
 sample_tab = BR.load_sample()
 
+config['top_peaks'] = 10
+config['macs_padj_filter'] = 0.01
+
 wildcard_constraints:
     sample = "|".join(sample_tab.sample_name),
 
