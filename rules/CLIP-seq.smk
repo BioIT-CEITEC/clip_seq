@@ -49,7 +49,7 @@ def annotate_peaks_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
+    inputs['gtf'] = config["organism_gtf"],
     return inputs
 
 rule annotate_peaks:
@@ -72,7 +72,7 @@ def post_process_by_RCAS_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
+    inputs['gtf'] = config["organism_gtf"],
     #inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory, ref=config["reference"])[0]
     return inputs
 
@@ -99,7 +99,7 @@ rule call_CLAM_postprocess:
 rule call_CLAM:
     input:  uniq_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/unique.sorted.bam",
             mult_bam ="results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
-            gtf = expand("{ref_dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0],
+            gtf = config["organism_gtf"],
     output: bed = "results/CLAM/{name}/{name}.{multi}.{dups}/narrow_peak.permutation.bed",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM.log",
     threads: 20
@@ -138,7 +138,7 @@ rule install_CLAM:
 rule call_macs2:
     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
-            chrs= expand("{ref_dir}/seq/{ref}.chrom.sizes", ref_dir=reference_directory, ref=config["reference"])[0],
+            chrs= config["organism_chr_sizes"],
     output: trt_bdg = "results/macs2/{name}/{name}.{multi}.{dups}.bdg",
             trt_bwg = "results/macs2/{name}/{name}.{multi}.{dups}.bigWig",
             # ctl_bdg = ADIR+"/results/macs2/{name}/{name}.{multi}.{dups}.control.bdg",
@@ -168,7 +168,7 @@ rule call_macs2:
 rule call_pureClip:
     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
-            gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0],
+            gen = config["organism_fasta"],
     output: bed = "results/pureClip/{name}/{name}.{multi}.{dups}.crosslink_sites.bed",
             bed2= "results/pureClip/{name}/{name}.{multi}.{dups}.binding_regions.bed",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_pureClip.log",
