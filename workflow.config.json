@@ -22,8 +22,34 @@
     "library_name",
     "sample_name"
   ],
+  "requested_params": [
+    "organism",
+    "assembly",
+    "release"
+  ],
   "gui_params": {
     "primary": {
+      "organism": {
+        "label": "Organism",
+        "type": "enum",
+        "dynamicEnumName": "organism"
+      },
+      "assembly": {
+        "label": "Genomic Reference Assembly",
+        "type": "enum",
+        "dynamicEnumName": "assembly",
+        "filters": {
+          "group": {
+            "param": "organism",
+            "type": "value",
+            "showGroupLabel": false
+          }
+        }
+      },
+      "release": {
+        "type": "constant",
+        "default": "UNK_UNK"
+      },
       "annotate_by": {
         "label": "Annotate by",
         "type": "enum",

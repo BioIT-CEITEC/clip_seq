@@ -14,25 +14,21 @@ GLOBAL_TMPD_PATH = config["globalTmpdPath"]
 
 os.makedirs(GLOBAL_TMPD_PATH, exist_ok=True)
 
-# setting organism from reference
-f = open(os.path.join(GLOBAL_REF_PATH,"reference_info","reference2.json"),)
-reference_dict = json.load(f)
-f.close()
-config["reference"] = "GRCh38-p10"
-config["species_name"] = [organism_name for organism_name in reference_dict.keys() if isinstance(reference_dict[organism_name],dict) and config["reference"] in reference_dict[organism_name].keys()][0]
-config["organism"] = config["species_name"].split(" (")[0].lower().replace(" ","_")
-if len(config["species_name"].split(" (")) > 1:
-    config["species"] = config["species_name"].split(" (")[1].replace(")","")
+##### BioRoot utilities #####
+module BR:
+    snakefile: github("BioIT-CEITEC/bioroots_utilities", path="bioroots_utilities.smk",branch="master")
+    config: config
 
+use rule * from BR as BR_*
 
 ##### Config processing #####
-# Folders
-#
-reference_directory = os.path.join(GLOBAL_REF_PATH,config["organism"],config["reference"])
 
-# Samples
-#
-sample_tab = pd.DataFrame.from_dict(config["samples"],orient="index")
+config = BR.load_organism()
+
+sample_tab = BR.load_sample()
+
+config['top_peaks'] = 10
+config['macs_padj_filter'] = 0.01
 
 wildcard_constraints:
     sample = "|".join(sample_tab.sample_name),
@@ -44,5 +40,11 @@ rule all:
 ##### Modules #####
 
 include: "rules/CLIP-seq.smk"
-# include: "rules/prepare_reference.smk"
+
+##### BioRoot utilities - prepare reference #####
+module PR:
+    snakefile: github("BioIT-CEITEC/bioroots_utilities", path="prepare_reference.smk",branch="master")
+    config: config
+
+use rule * from PR as PR_*
 

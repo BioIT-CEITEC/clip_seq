@@ -49,20 +49,34 @@ def annotate_peaks_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
+    inputs['gtf'] = config["organism_gtf"]
+    inputs['fa'] = config["organism_fasta"]
     return inputs
 
 rule annotate_peaks:
-    input:  unpack(annotate_peaks_input),
-    output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+    input:  unpack(annotate_peaks_input)
+    output: tsv = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+            annstats = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.HOMER_ann_stats.tsv",
     log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
-    resources: mem=10 if config["organism"] == "homo_sapiens" else 5
-    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
-            feat_type=config["feat_type"],
-            annotate_by = config["annotate_by"],
+    resources: mem = 10 if config["organism"] == "homo_sapiens" else 5
+    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/plots_and_stats.R",
+            fdr_cutof = config["macs_padj_filter"],
+            best = config["top_peaks"],
+            tmpd = GLOBAL_TMPD_PATH,
     conda:  "../wrappers/annotate_peaks/env.yaml"
     script: "../wrappers/annotate_peaks/script.py"
-    
+
+#rule annotate_peaks:
+#    input:  unpack(annotate_peaks_input),
+#    output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+#    log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
+#    resources: mem=10 if config["organism"] == "homo_sapiens" else 5
+#    params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
+#            feat_type=config["feat_type"],
+#            annotate_by = config["annotate_by"],
+#    conda:  "../wrappers/annotate_peaks/env.yaml"
+#    script: "../wrappers/annotate_peaks/script.py"
+#    
 
 def post_process_by_RCAS_input(wildcards):
     inputs = dict()
@@ -72,7 +86,7 @@ def post_process_by_RCAS_input(wildcards):
         inputs['bed'] = "results/CLAM/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+"/narrow_peak.permutation.processed.bed"
     elif wildcards.caller == "macs2":
         inputs['bed'] = "results/macs2/"+wildcards.sample+"/"+wildcards.sample+"."+wildcards.multi+"."+wildcards.dups+".peaks.narrowPeak"
-    inputs['gtf'] = expand("{ref_dir}/annot/{ref}.gtf", ref_dir=reference_directory, ref=config["reference"])[0]
+    inputs['gtf'] = config["organism_gtf"]
     #inputs['msigdb'] = expand("{ref_dir}/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt", ref_dir=reference_directory, ref=config["reference"])[0]
     return inputs
 
@@ -81,6 +95,7 @@ rule post_process_by_RCAS:
     output: html    = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.RCAS_report.html",
             tmp_bed = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed",
     log:    run     = "logs/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.from_{caller}.log",
+    resources: mem = 20
     params: organism = config["organism"],
             dir = "results/RCAS/from_{caller}/{sample}/",
             html= "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed.RCAS.report.html",
@@ -99,7 +114,7 @@ rule call_CLAM_postprocess:
 rule call_CLAM:
     input:  uniq_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/unique.sorted.bam",
             mult_bam ="results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
-            gtf = expand("{ref_dir}/annot/{ref}.gtf",ref_dir=reference_directory,ref=config["reference"])[0],
+            gtf = config["organism_gtf"],
     output: bed = "results/CLAM/{name}/{name}.{multi}.{dups}/narrow_peak.permutation.bed",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM.log",
     threads: 20
@@ -120,7 +135,7 @@ rule call_CLAM_preprocess:
             mult_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM_preprocess.log",
     threads: 1
-    resources: mem=50
+    resources: mem = 50
     params: strand =  config["strandness"], # strandness
             max_multi_hits = config["max_multi_hits"], # maximum hits allowed for multi-mapped reads [integer]
             read_tagger = config["read_tagger"], # read tagger method, 'median' for read center, 'start' for read start site ['median', 'start']
@@ -138,7 +153,7 @@ rule install_CLAM:
 rule call_macs2:
     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
-            chrs= expand("{ref_dir}/seq/{ref}.chrom.sizes", ref_dir=reference_directory, ref=config["reference"])[0],
+            chrs= config["organism_chr_sizes"],
     output: trt_bdg = "results/macs2/{name}/{name}.{multi}.{dups}.bdg",
             trt_bwg = "results/macs2/{name}/{name}.{multi}.{dups}.bigWig",
             # ctl_bdg = ADIR+"/results/macs2/{name}/{name}.{multi}.{dups}.control.bdg",
@@ -168,7 +183,7 @@ rule call_macs2:
 rule call_pureClip:
     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
-            gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0],
+            gen = config["organism_fasta"],
     output: bed = "results/pureClip/{name}/{name}.{multi}.{dups}.crosslink_sites.bed",
             bed2= "results/pureClip/{name}/{name}.{multi}.{dups}.binding_regions.bed",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_pureClip.log",
