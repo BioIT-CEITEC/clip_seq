@@ -95,6 +95,7 @@ rule post_process_by_RCAS:
     output: html    = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.RCAS_report.html",
             tmp_bed = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed",
     log:    run     = "logs/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.from_{caller}.log",
+    resources: mem = 20
     params: organism = config["organism"],
             dir = "results/RCAS/from_{caller}/{sample}/",
             html= "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed.RCAS.report.html",
@@ -134,7 +135,7 @@ rule call_CLAM_preprocess:
             mult_bam = "results/CLAM/{name}/{name}.{multi}.{dups}/realigned.sorted.bam",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_CLAM_preprocess.log",
     threads: 1
-    resources: mem=50
+    resources: mem = 50
     params: strand =  config["strandness"], # strandness
             max_multi_hits = config["max_multi_hits"], # maximum hits allowed for multi-mapped reads [integer]
             read_tagger = config["read_tagger"], # read tagger method, 'median' for read center, 'start' for read start site ['median', 'start']
