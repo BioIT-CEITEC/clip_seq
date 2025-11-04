@@ -40,5 +40,11 @@ rule all:
 ##### Modules #####
 
 include: "rules/CLIP-seq.smk"
-# include: "rules/prepare_reference.smk"
+
+##### BioRoot utilities - prepare reference #####
+module PR:
+    snakefile: github("BioIT-CEITEC/bioroots_utilities", path="prepare_reference.smk",branch="master")
+    config: config
+
+use rule * from PR as PR_*
 
