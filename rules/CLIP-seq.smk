@@ -16,17 +16,27 @@ from os.path import split
 def specify_inputs_for_final_report(wildcards):
     inputs = list()
     callers = config["callers"].split(";")
-    inputs.append(expand("results/RCAS/from_{caller}/{name}/{name}.uniq_reads.no_dups.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
-    inputs.append(expand("results/annotated_beds/from_{caller}/{name}/{name}.uniq_reads.no_dups.annotated.bed", caller=callers, name=sample_tab.sample_name))
+    pureclip_w_ctl = ['G3BP1_oxid_rep1_VS_G3BP1_ctrl_rep1', 'G3BP1_oxid_rep2_VS_G3BP1_ctrl_rep2']
+    pureclip_multi_sample = ['G3BP1_oxid', 'G3BP1_ctrl']
+    inputs.append(expand("results/RCAS/{name}/{name}.uniq_reads.no_dups.from_{caller}/{name}.uniq_reads.no_dups.from_{caller}.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
+    inputs.append(expand("results/annotated_beds/{name}/{name}.uniq_reads.no_dups.from_{caller}.annotated.bed", caller=callers, name=sample_tab.sample_name))
+    inputs.append(expand("results/pureClip_w_ctl/{name}/{name}.uniq_reads.no_dups.binding_regions.bed", name=pureclip_w_ctl))
+    inputs.append(expand("results/pureClip/{name}/{name}.uniq_reads.no_dups.binding_regions.bed", name=pureclip_multi_sample))
     if config['keep_dups']:
-        inputs.append(expand("results/RCAS/from_{caller}/{name}/{name}.uniq_reads.keep_dups.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
-        inputs.append(expand("results/annotated_beds/from_{caller}/{name}/{name}.uniq_reads.keep_dups.annotated.bed", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/RCAS/{name}/{name}.uniq_reads.keep_dups.from_{caller}/{name}.uniq_reads.keep_dups.from_{caller}.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/annotated_beds/{name}/{name}.uniq_reads.keep_dups.from_{caller}.annotated.bed", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/pureClip_w_ctl/{name}/{name}.uniq_reads.keep_dups.binding_regions.bed", name=pureclip_w_ctl))
+        inputs.append(expand("results/pureClip/{name}/{name}.uniq_reads.keep_dups.binding_regions.bed", name=pureclip_multi_sample))
     if config['multimapped']:
-        inputs.append(expand("results/RCAS/from_{caller}/{name}/{name}.all_reads.no_dups.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
-        inputs.append(expand("results/annotated_beds/from_{caller}/{name}/{name}.all_reads.no_dups.annotated.bed", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/RCAS/{name}/{name}.all_reads.no_dups.from_{caller}/{name}.all_reads.no_dups.from_{caller}.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/annotated_beds/{name}/{name}.all_reads.no_dups.from_{caller}.annotated.bed", caller=callers, name=sample_tab.sample_name))
+        inputs.append(expand("results/pureClip_w_ctl/{name}/{name}.all_reads.no_dups.binding_regions.bed", name=pureclip_w_ctl))
+        inputs.append(expand("results/pureClip/{name}/{name}.all_reads.no_dups.binding_regions.bed", name=pureclip_multi_sample))
         if config['keep_dups']:
-            inputs.append(expand("results/RCAS/from_{caller}/{name}/{name}.all_reads.keep_dups.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
-            inputs.append(expand("results/annotated_beds/from_{caller}/{name}/{name}.all_reads.keep_dups.annotated.bed", caller=callers, name=sample_tab.sample_name))
+            inputs.append(expand("results/RCAS/{name}/{name}.all_reads.keep_dups.from_{caller}/{name}.all_reads.keep_dups.from_{caller}.RCAS_report.html", caller=callers, name=sample_tab.sample_name))
+            inputs.append(expand("results/annotated_beds/{name}/{name}.all_reads.keep_dups.from_{caller}.annotated.bed", caller=callers, name=sample_tab.sample_name))
+            inputs.append(expand("results/pureClip_w_ctl/{name}/{name}.all_reads.keep_dups.binding_regions.bed", name=pureclip_w_ctl))
+            inputs.append(expand("results/pureClip/{name}/{name}.all_reads.keep_dups.binding_regions.bed", name=pureclip_multi_sample))
     #print(inputs)
     return inputs
     
@@ -54,7 +64,7 @@ def annotate_peaks_input(wildcards):
 
 rule annotate_peaks:
     input:  unpack(annotate_peaks_input),
-    output: bed = "results/annotated_beds/from_{caller}/{sample}/{sample}.{multi}.{dups}.annotated.bed",
+    output: bed = "results/annotated_beds/{sample}/{sample}.{multi}.{dups}.from_{caller}.annotated.bed",
     log:    run = "logs/{sample}/{sample}.{multi}.{dups}.annotate_peaks.from_{caller}.log",
     resources: mem=10 if config["organism"] == "homo_sapiens" else 5
     params: rscript = workflow.basedir+"/wrappers/annotate_peaks/annotate_peaks.R",
@@ -78,12 +88,12 @@ def post_process_by_RCAS_input(wildcards):
 
 rule post_process_by_RCAS:
     input:  unpack(post_process_by_RCAS_input),
-    output: html    = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.RCAS_report.html",
-            tmp_bed = "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed",
+    output: html    = "results/RCAS/{sample}/{sample}.{multi}.{dups}.from_{caller}/{sample}.{multi}.{dups}.from_{caller}.RCAS_report.html",
+            bed = "results/RCAS/{sample}/{sample}.{multi}.{dups}.from_{caller}/{sample}.{multi}.{dups}.from_{caller}.input.bed",
     log:    run     = "logs/{sample}/{sample}.{multi}.{dups}.post_process_by_RCAS.from_{caller}.log",
     params: organism = config["organism"],
-            dir = "results/RCAS/from_{caller}/{sample}/",
-            html= "results/RCAS/from_{caller}/{sample}/{sample}.{multi}.{dups}.input.bed.RCAS.report.html",
+            dir = "results/RCAS/{sample}/{sample}.{multi}.{dups}.from_{caller}/",
+            html= "results/RCAS/{sample}/{sample}.{multi}.{dups}.from_{caller}/{sample}.{multi}.{dups}.from_{caller}.input.bed.RCAS.report.html",
             rscript= workflow.basedir+"/wrappers/post_process_by_RCAS/RCAS_script.R",
     conda:  "../wrappers/post_process_by_RCAS/env.yaml"
     script: "../wrappers/post_process_by_RCAS/script.py"
@@ -165,16 +175,47 @@ rule call_macs2:
     script: "../wrappers/call_macs2/script.py"
 
 
+# rule call_pureClip:
+#     input:  bam = "mapped/{name}.{multi}.{dups}.bam",
+#             bai = "mapped/{name}.{multi}.{dups}.bam.bai",
+#             gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0],
+#     output: bed = "results/pureClip/{name}/{name}.{multi}.{dups}.crosslink_sites.bed",
+#             bed2= "results/pureClip/{name}/{name}.{multi}.{dups}.binding_regions.bed",
+#     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_pureClip.log",
+#     threads: 10
+#     conda:  "../wrappers/call_pureClip/env.yaml"
+#     script: "../wrappers/call_pureClip/script.py"
+    
+def call_pureClip_inputs(wcs):
+  inputs = {}
+  sample=set([i for i in sample_tab.sample_name if i.startswith(wcs.name)])
+  inputs['bam'] = expand("mapped/{name}.{{multi}}.{{dups}}.bam", name=sample)
+  inputs['bai'] = expand("mapped/{name}.{{multi}}.{{dups}}.bam.bai", name=sample)
+  inputs['gen'] = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0]
+  print(inputs)
+  return inputs
+
 rule call_pureClip:
-    input:  bam = "mapped/{name}.{multi}.{dups}.bam",
-            bai = "mapped/{name}.{multi}.{dups}.bam.bai",
-            gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0],
+    input:  unpack(call_pureClip_inputs),
     output: bed = "results/pureClip/{name}/{name}.{multi}.{dups}.crosslink_sites.bed",
             bed2= "results/pureClip/{name}/{name}.{multi}.{dups}.binding_regions.bed",
     log:    run = "logs/{name}/{name}.{multi}.{dups}.call_pureClip.log",
     threads: 10
     conda:  "../wrappers/call_pureClip/env.yaml"
     script: "../wrappers/call_pureClip/script.py"
+    
+rule call_pureClip_with_ctrl:
+    input:  bam = "mapped/{name}.{multi}.{dups}.bam",
+            bai = "mapped/{name}.{multi}.{dups}.bam.bai",
+            cbam = "mapped/{cname}.{multi}.{dups}.bam",
+            cbai = "mapped/{cname}.{multi}.{dups}.bam.bai",
+            gen = expand("{ref_dir}/seq/{ref}.fasta.gz", ref_dir=reference_directory, ref=config["reference"])[0],
+    output: bed = "results/pureClip_w_ctl/{name}_VS_{cname}/{name}_VS_{cname}.{multi}.{dups}.crosslink_sites.bed",
+            bed2= "results/pureClip_w_ctl/{name}_VS_{cname}/{name}_VS_{cname}.{multi}.{dups}.binding_regions.bed",
+    log:    run = "logs/{name}_VS_{cname}/{name}_VS_{cname}.{multi}.{dups}.call_pureClip_with_ctrl.log",
+    threads: 10
+    conda:  "../wrappers/call_pureClip_with_ctrl/env.yaml"
+    script: "../wrappers/call_pureClip_with_ctrl/script.py"
 
 
 # ##########################################
