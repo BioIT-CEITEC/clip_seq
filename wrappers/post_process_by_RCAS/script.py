@@ -23,7 +23,7 @@ if snakemake.params.organism == "homo_sapiens":
                   " "+snakemake.input.bed+\
                   " "+snakemake.input.gtf+\
                   " "+snakemake.params.dir+\
-                  " "+snakemake.output.tmp_bed+\
+                  " "+snakemake.output.bed+\
                   " >> "+log_filename+" 2>&1"
         f = open(log_filename, 'at')
         f.write("## COMMAND: "+command+"\n")
@@ -37,7 +37,7 @@ if snakemake.params.organism == "homo_sapiens":
         with open(log_filename, 'at') as f:
             f.write("## ERROR: "+message+"\n")
 
-        command = "touch "+snakemake.params.html+" >> "+log_filename+" 2>&1"
+        command = "touch "+snakemake.params.html+" "+snakemake.output.bed+" >> "+log_filename+" 2>&1"
         f = open(log_filename, 'at')
         f.write("## COMMAND: "+command+"\n")
         f.close()
@@ -46,7 +46,7 @@ if snakemake.params.organism == "homo_sapiens":
     with open(log_filename, 'at') as f:
         f.write("## NOTE: "+snakemake.input.bed+" is empty\n")
 
-    command = "touch "+snakemake.params.html+" "+snakemake.output.tmp_bed+" >> "+log_filename+" 2>&1"
+    command = "touch "+snakemake.params.html+" "+snakemake.output.bed+" >> "+log_filename+" 2>&1"
     f = open(log_filename, 'at')
     f.write("## COMMAND: "+command+"\n")
     f.close()

@@ -11,29 +11,29 @@ args = commandArgs(trailingOnly=TRUE)
 # bed = "results/CLAM/ZNF-FCLx/ZNF-FCLx.all_reads.keep_dups/narrow_peak.permutation.processed.bed"
 # gtf = "/mnt/nfs/shared/CFBioinformatics/references_backup/homo_sapiens/GRCh38-p10/annot/GRCh38-p10.gtf"
 # dir = "results/RCAS/from_CLAM/ZNF-FCLx/"
-# tmp_bed = "results/RCAS/from_CLAM/ZNF-FCLx/ZNF-FCLx.all_reads.keep_dups.input.bed"
+# out_bed = "results/RCAS/from_CLAM/ZNF-FCLx/ZNF-FCLx.all_reads.keep_dups.input.bed"
 # msigdb = "/mnt/nfs/shared/CFBioinformatics/references_backup/homo_sapiens/GRCh38-p10/other/MSigDB_for_RCAS/c2.all.v7.1.entrez.gmt"
 
 bed <- args[1]
 gtf <- args[2]
 dir <- args[3]
-tmp_bed <- args[4]
+out_bed <- args[4]
 
 bed_tab <- fread(bed, sep = "\t", select=1:6)
 names(bed_tab) <- c("chr","start","end","name","score","strand")
 class(bed_tab[["chr"]]) <- "character"
-fwrite(bed_tab, tmp_bed, sep = "\t", quote = F, row.names = F, col.names = F)
+fwrite(bed_tab, out_bed, sep = "\t", quote = F, row.names = F, col.names = F)
 
 setwd(dir)
 
-runReport( queryFilePath = basename(tmp_bed),
+runReport( queryFilePath = basename(out_bed),
            gffFilePath = gtf,
            printProcessedTables = T,
            genomeVersion = "hg38",
            motifAnalysis = T)
 
 
-# queryRegions <- importBed(filePath = tmp_bed, sampleN = 10000)
+# queryRegions <- importBed(filePath = out_bed, sampleN = 10000)
 # # setwd("/mnt/nfs/shared/999993-Bioda/projects/a96_dragana_clipseq/results/pub1/peak_calling/pureclip/oa/SRR1688578/")
 # # bed <- fread("SRR1688578.PureCLIP.crosslink_sites.bed",sep = "\t")
 # bed$V7 <- NULL
